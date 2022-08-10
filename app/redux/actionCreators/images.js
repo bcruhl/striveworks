@@ -14,25 +14,24 @@ export const uploadImage = file => async (dispatch, _, api) => {
   const formData = new FormData();
   formData.append('file', file);
   formData.append('fileName', file.name);
-
   try {
     //1. Upload the image 
     //2. Retrieve latest images from CDN and put into state.images[]
     const responseData = await api.post(url, formData, {
-      'content-type': 'multipart/form-data',
+      'Content-Type': 'multipart/form-data',
+    });
+
+    //Update the list of images in state (FAKED)
+    setImageListInState(dispatch, responseData);
+
+    //Clear search Query string from state
+    dispatch({
+      type: actionTypes.SET_FILTER_IMAGES_BY_NAME,
+      payload: '',
     });
   } catch (e) {
     console.error("There was an error while trying to upload your image", e);
   }
-
-  //Update the list of images in state (FAKED)
-  setImageListInState(dispatch, responseData);
-
-  //Clear search Query string from state
-  dispatch({
-    type: actionTypes.SET_FILTER_IMAGES_BY_NAME,
-    payload: '',
-  });
 }
 
 export const fetchImages = () => async (dispatch, getState, api) => {

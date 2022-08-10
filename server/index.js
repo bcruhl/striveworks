@@ -3,6 +3,7 @@ const bodyParser = require("body-parser");
 const fs = require('fs');
 const path = require('path');
 const cors = require("cors");
+const busboyCons = require('busboy');
 
 const app = express();
 const corsOptions = {
@@ -26,27 +27,47 @@ const superFakeCDNContent = [
 ];
 
 app.get('/api/listImages', (req, res) => {
-  res.send(superFakeCDNContent);
+  res.send(getUploadedFiles());
 });
+
+const getUploadedFiles = () => {
+  let filesOnSystem = [];
+  fs.readdirSync('./../app/assets').forEach(file => {
+    console.log("files:", file);
+    filesOnSystem.push({src: '/app/assets/'+file});
+  });
+  console.log("files on system:", filesOnSystem);
+  return filesOnSystem;
+}
 
 app.get('/api/queryImageNames', (req, res) => {
   const query = req.query?.query ?? '';
   let filteredNames = [];
+  let filesOnSystem = getUploadedFiles();
   if (query !== "") {
-    filteredNames = superFakeCDNContent.filter((name) => {
+    filteredNames = filesOnSystem.filter((name) => {
       return name.src.toLowerCase().includes(query.toLowerCase());
     });
   } else {
-    filteredNames = superFakeCDNContent;
+    filteredNames = filesOnSystem;
   }
   res.send(filteredNames);
 });
 
 app.post('/api/uploadImage', (req, res) => {
   //WRITE FILE TO CDN
-
-  //FETCH LIST OF IMAGE URLS ON CDN AND RETURN IN res
-  res.send(superFakeCDNContent);
+  const busboy = busboyCons({ headers: req.headers });
+  busboy.on('file', (fieldname, file, filename, encoding, mimetype) => {
+    const saveTo = __dirname + '/../app/assets/' + filename.filename;
+    console.log('Uploading: ' + saveTo);
+    file.pipe(fs.createWriteStream(saveTo));
+  });
+  busboy.on('finish', () => {
+    console.log('Upload complete');
+    //FETCH LIST OF IMAGE URLS ON CDN AND RETURN IN res
+    res.send(getUploadedFiles());
+  });
+  return req.pipe(busboy);
 });
 
 const saveFile = (url, body) => {
