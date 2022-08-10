@@ -1,0 +1,4 @@
+export default {
+  TOGGLE_REVIEW: 'TOGGLE_REVIEW',
+  TOGGLE_KEYWORDS: 'TOGGLE_KEYWORDS',
+};
